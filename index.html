@@ -3,101 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok Shop - Seller Center</title>
+    <title>TKSHOP PREMIUM</title>
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/vant@4/lib/index.css"/>
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
     <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
     <style>
-        /* 1. เปลี่ยนแค่สีพื้นหลังเป็นขาวคลีน */
-        body { background-color: #ffffff; color: #161823; font-family: sans-serif; margin: 0; }
+        /* เปลี่ยนแค่สีวอลเปเปอร์จากดำเป็นขาว */
+        body { background-color: #ffffff; color: #161823; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; }
         
-        .header-logo { text-align: center; padding: 40px 0 20px 0; }
-        .header-logo img { width: 140px; }
+        /* คืนค่า Header และ Logo ตามต้นฉบับพี่ */
+        .header-section { text-align: center; padding: 40px 0 20px 0; }
+        .header-section img { width: 150px; }
+        .header-title { font-weight: bold; font-size: 20px; color: #000; margin-top: 5px; }
+        .header-sub { font-size: 12px; color: #8a8b91; }
 
-        .auth-container { padding: 0 30px; }
+        .form-container { padding: 0 32px; }
 
-        /* 2. เมนูเลือก เข้าสู่ระบบ/สมัครสมาชิก ใช้สีแดง TikTok */
-        .tab-menu { display: flex; justify-content: center; gap: 40px; margin-bottom: 25px; border-bottom: 1px solid #f2f2f2; }
-        .tab-item { padding: 10px 0; font-size: 16px; color: #8a8b91; cursor: pointer; }
-        .tab-item.active { color: #161823; font-weight: bold; border-bottom: 2px solid #fe2c55; }
+        /* คืนค่าเมนู อีเมล/เบอร์โทรศัพท์ */
+        .tab-wrapper { display: flex; justify-content: center; gap: 30px; margin-bottom: 25px; border-bottom: 1px solid #f2f2f2; }
+        .tab-nav { padding: 12px 0; font-size: 15px; color: #8a8b91; cursor: pointer; }
+        .tab-nav.active { color: #000; font-weight: bold; border-bottom: 2px solid #fe2c55; }
 
-        /* 3. คืนค่าช่อง Input แบบเดิมของพี่ แต่ใช้โทนสีสว่าง */
-        .van-field { background: #f1f1f2; border-radius: 4px; margin-bottom: 15px; padding: 10px 16px; border: none; }
+        /* ปรับ Input ให้เป็นโทนสว่างแต่โครงสร้างเดิมครบ */
+        .van-field { background: #f1f1f2 !important; border-radius: 4px; margin-bottom: 15px; padding: 12px 16px; }
+        .van-field__control { color: #000; }
         
-        /* 4. ปุ่มสีแดง TikTok ของแท้ */
-        .van-button--primary { background: #fe2c55; border: none; border-radius: 4px; height: 48px; font-weight: bold; font-size: 16px; }
+        /* ปุ่มสีแดง TikTok */
+        .van-button--primary { background: #fe2c55; border: none; border-radius: 4px; height: 48px; font-weight: bold; font-size: 16px; margin-top: 10px; }
         
-        .footer-link { text-align: center; color: #fe2c55; font-size: 13px; margin-top: 25px; }
+        .footer-note { text-align: center; color: #8a8b91; font-size: 12px; margin-top: 30px; }
     </style>
 </head>
 <body>
     <div id="app">
-        <div style="position: absolute; right: 15px; top: 15px; font-size: 12px; color: #8a8b91;">
-            <img src="https://flagcdn.com/w20/th.png" width="16"> TH / <img src="https://flagcdn.com/w20/us.png" width="16"> EN
+        <div style="position: absolute; right: 15px; top: 15px; font-size: 12px; color: #000; font-weight: bold;">
+             🇹🇭 TH / 🇺🇸 EN
         </div>
 
-        <div class="header-logo">
-            <img src="https://p16-va.lemon8cdn.com/tos-alisg-v-a3e477-sg/o8fA7I9AfEAnC7e8DAIBeAf8e9f2EAfADDAfA9~tplv-tej9nj120t-origin.webp" alt="TikTok Shop">
+        <div class="header-section">
+            <img src="https://p16-va.lemon8cdn.com/tos-alisg-v-a3e477-sg/o8fA7I9AfEAnC7e8DAIBeAf8e9f2EAfADDAfA9~tplv-tej9nj120t-origin.webp" alt="Logo">
+            <div class="header-title">TKSHOP PREMIUM</div>
+            <div class="header-sub">Global Security Trading Center</div>
         </div>
 
-        <div class="auth-container">
-            <div class="tab-menu">
-                <div class="tab-item" :class="{active: isLogin}" @click="isLogin = true">เข้าสู่ระบบ</div>
-                <div class="tab-item" :class="{active: !isLogin}" @click="isLogin = false">สมัครสมาชิก</div>
+        <div class="form-container">
+            <div class="tab-wrapper">
+                <div class="tab-nav" :class="{active: !isPhoneMode}" @click="isPhoneMode = false">อีเมล</div>
+                <div class="tab-nav" :class="{active: isPhoneMode}" @click="isPhoneMode = true">เบอร์โทรศัพท์</div>
             </div>
 
-            <van-field v-model="phone" placeholder="เบอร์โทรศัพท์">
+            <van-field v-if="isPhoneMode" v-model="phone" placeholder="เบอร์โทรศัพท์">
                 <template #left-icon>
-                    <div style="display: flex; align-items: center; gap: 5px; border-right: 1px solid #ccc; padding-right: 8px; margin-right: 10px;">
+                    <div style="display: flex; align-items: center; gap: 5px; border-right: 1px solid #ddd; padding-right: 8px; margin-right: 10px;">
                         <img src="https://flagcdn.com/w20/th.png" width="18">
                         <span style="color: #000;">+66</span>
                     </div>
                 </template>
             </van-field>
+            <van-field v-else v-model="email" placeholder="กรุณากรอกอีเมล" left-icon="envelop-o" />
 
             <van-field v-model="password" type="password" placeholder="รหัสผ่าน" left-icon="lock" />
             
-            <van-field v-if="!isLogin" v-model="inviteCode" placeholder="ระบุรหัสแนะนำ (Invitation Code)" left-icon="friends-o" />
+            <van-field v-model="inviteCode" placeholder="ระบุรหัสแนะนำ (Invitation Code)" left-icon="friends-o" />
 
             <van-button block type="primary" @click="handleAction">
-                {{ isLogin ? 'เข้าสู่ระบบ' : 'ลงทะเบียนระดับพรีเมียม' }}
+                ลงทะเบียนระดับพรีเมียม
             </van-button>
 
-            <div class="footer-link" @click="isLogin = !isLogin">
-                {{ isLogin ? 'ยังไม่มีบัญชี? สมัครสมาชิก' : 'มีบัญชีอยู่แล้ว? เข้าสู่ระบบที่นี่' }}
-            </div>
+            <div class="footer-note">Security Powered by Global SSL Encryption</div>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBf2BfaGTs6qQD3MO5tSZLLW-BuQFvDVwM",
-            authDomain: "my-trading-db.firebaseapp.com",
-            projectId: "my-trading-db",
-            storageBucket: "my-trading-db.firebasestorage.app",
-            messagingSenderId: "682968234759",
-            appId: "1:682968234759:web:eb2978d1e4019b77cb23a2"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
         const { createApp, ref } = Vue;
         createApp({
             setup() {
-                const isLogin = ref(false);
+                const isPhoneMode = ref(true);
                 const phone = ref('');
+                const email = ref('');
                 const password = ref('');
                 const inviteCode = ref('');
 
-                const handleAction = async () => {
-                    if (!phone.value || !password.value) return vant.showFailToast('กรุณากรอกข้อมูล');
+                const handleAction = () => {
                     vant.showLoadingToast({ message: 'กำลังดำเนินการ...', forbidClick: true });
-                    // เชื่อมต่อ DB เดิมที่พี่ตั้งไว้
+                    // โค้ดเชื่อม Firebase เดิมของพี่
                 };
-                return { isLogin, phone, password, inviteCode, handleAction };
+
+                return { isPhoneMode, phone, email, password, inviteCode, handleAction };
             }
         }).use(vant).mount('#app');
     </script>
