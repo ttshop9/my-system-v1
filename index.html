@@ -12,71 +12,111 @@
         .header-box { background: #000; color: #fff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
         .balance-section { 
             background: linear-gradient(135deg, #1a1a1a, #4a4a4a); 
-            margin: 15px; padding: 20px; border-radius: 15px; color: #fff;
+            margin: 15px; padding: 25px; border-radius: 15px; color: #fff;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-        .notice-bar { background: #fff; margin-bottom: 10px; }
-        .mission-card { background: #fff; margin: 10px 15px; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
-        .mission-info { display: flex; align-items: center; }
-        .mission-icon { width: 40px; height: 40px; background: #fe2c55; border-radius: 8px; margin-right: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
-        .withdraw-btn { background: #fe2c55; border: none; color: #fff; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
-        .floating-service { position: fixed; right: 20px; bottom: 80px; width: 50px; height: 50px; background: #25f4ee; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 999; }
+        .balance-amount { font-size: 36px; font-weight: bold; margin: 10px 0; color: #25f4ee; }
+        .withdraw-btn { background: #fe2c55; border: none; color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        
+        /* สไตล์หน้าต่างเติมเงิน */
+        .recharge-content { padding: 20px; text-align: center; }
+        .bank-card { background: #f8f8f8; border: 1px dashed #ccc; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left; }
+        .bank-label { font-size: 12px; color: #666; }
+        .bank-value { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .copy-btn { color: #fe2c55; font-size: 14px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="header-box">
-            <span style="font-weight: bold; font-size: 18px;">TikTok<span style="color:#fe2c55">Shop</span></span>
-            <van-icon name="setting-o" size="20"></van-icon>
+            <span style="font-weight: bold; font-size: 20px;">TikTok<span style="color:#fe2c55">Shop</span></span>
+            <van-icon name="setting-o" size="22"></van-icon>
         </div>
-
-        <van-notice-bar class="notice-bar" left-icon="volume-o" text="ยินดีด้วยกับคุณบัญชี 089***45xx ถอนเงินสำเร็จ 15,000 บาท, คุณบัญชี 061***99xx รับค่าคอมมิชชั่น 2,500 บาท..."></van-notice-bar>
 
         <div class="balance-section">
-            <div style="font-size: 14px; opacity: 0.8;">ยอดเงินคงเหลือ (THB)</div>
-            <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">฿ 1,540.00</div>
-            <div style="display: flex; gap: 10px;">
-                <button class="withdraw-btn" style="background: #fff; color: #000;">เติมเงิน</button>
-                <button class="withdraw-btn">ถอนเงิน</button>
+            <div style="font-size: 14px; opacity: 0.8;">ยอดเงินคงเหลือสะสม (THB)</div>
+            <div class="balance-amount">฿ {{ formatMoney(balance) }}</div>
+            <div style="display: flex; gap: 12px; margin-top: 15px;">
+                <button class="withdraw-btn" style="background: #fff; color: #000;" @click="showRecharge = true">เติมเงิน</button>
+                <button class="withdraw-btn" @click="receiveJob">ถอนเงิน</button>
             </div>
         </div>
 
-        <van-grid :column-num="4" :border="false" style="background: #fff; padding: 10px 0;">
-            <van-grid-item icon="records-o" text="ประวัติงาน"></van-grid-item>
-            <van-grid-item icon="balance-o" text="กระเป๋าเงิน"></van-grid-item>
-            <van-grid-item icon="friends-o" text="เชิญเพื่อน"></van-grid-item>
-            <van-grid-item icon="warn-o" text="เกี่ยวกับเรา"></van-grid-item>
-        </van-grid>
+        <div style="padding: 10px 15px; font-weight: bold; color: #333;">ภารกิจประจำวัน</div>
+        <div v-for="i in 3" :key="i" style="background:#fff; margin:10px 15px; padding:15px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span>ภารกิจโปรโมทสินค้าที่ {{i + 500}}</span>
+            <van-button size="small" type="primary" color="#fe2c55" round @click="receiveJob">รับงาน</van-button>
+        </div>
 
-        <div style="padding: 10px 15px; font-weight: bold; color: #666;">ภารกิจวันนี้</div>
-        <div class="mission-card" v-for="i in 3" :key="i">
-            <div class="mission-info">
-                <div class="mission-icon"><van-icon name="shopping-cart-o" size="24"></van-icon></div>
-                <div>
-                    <div style="font-weight: bold;">ภารกิจโปรโมทสินค้าที่ {{i}}</div>
-                    <div style="font-size: 12px; color: #999;">ค่าคอมมิชชั่น: 15% - 25%</div>
+        <van-popup v-model:show="showRecharge" position="bottom" round closeable :style="{ height: '60%' }">
+            <div class="recharge-content">
+                <h3 style="margin-top: 0;">เติมเงินเข้าระบบ</h3>
+                <p style="color: #999; font-size: 13px;">กรุณาโอนเงินไปยังบัญชีด้านล่างเพื่อเพิ่มยอดเงิน</p>
+                
+                <div class="bank-card">
+                    <div class="bank-label">ธนาคาร</div>
+                    <div class="bank-value">กสิกรไทย (K-Bank)</div>
+                    
+                    <div class="bank-label">เลขบัญชี</div>
+                    <div class="bank-value">
+                        <span>123-4-56789-0</span>
+                        <span class="copy-btn" @click="copyText('1234567890')">คัดลอก</span>
+                    </div>
+                    
+                    <div class="bank-label">ชื่อบัญชี</div>
+                    <div class="bank-value">บจก. ติ๊กต็อก ช็อป (ไทยแลนด์)</div>
+                </div>
+
+                <van-field v-model="amountToPay" type="number" label="จำนวนเงิน" placeholder="ระบุจำนวนที่โอน" border></van-field>
+                
+                <div style="margin-top: 20px;">
+                    <van-button block color="#fe2c55" round @click="confirmRecharge">แจ้งโอนเงิน</van-button>
                 </div>
             </div>
-            <van-button size="small" type="primary" color="#fe2c55" round>รับงาน</van-button>
-        </div>
-
-        <div class="floating-service">
-            <van-icon name="service" size="30" color="#fff"></van-icon>
-        </div>
+        </van-popup>
 
         <van-tabbar v-model="active" active-color="#fe2c55">
             <van-tabbar-item icon="home-o">หน้าแรก</van-tabbar-item>
             <van-tabbar-item icon="description-o">ภารกิจ</van-tabbar-item>
-            <van-tabbar-item icon="manager-o">ข้อมูลส่วนตัว</van-tabbar-item>
+            <van-tabbar-item icon="manager-o">บัญชีของฉัน</van-tabbar-item>
         </van-tabbar>
     </div>
 
     <script>
-        const { createApp, ref } = Vue;
+        const { createApp, ref, onMounted } = Vue;
         const app = createApp({
             setup() {
                 const active = ref(0);
-                return { active };
+                const balance = ref(1540.00);
+                const showRecharge = ref(false);
+                const amountToPay = ref('');
+
+                const formatMoney = (val) => val.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+
+                const copyText = (text) => {
+                    navigator.clipboard.writeText(text);
+                    vant.showSuccessToast('คัดลอกเลขบัญชีแล้ว');
+                };
+
+                const confirmRecharge = () => {
+                    if(!amountToPay.value) return vant.showFailToast('กรุณาระบุจำนวนเงิน');
+                    vant.showLoadingToast({ message: 'กำลังตรวจสอบ...', forbidClick: true });
+                    setTimeout(() => {
+                        vant.showDialog({ title: 'สำเร็จ', message: 'ส่งข้อมูลแจ้งโอนแล้ว กรุณารอระบบตรวจสอบภายใน 5-10 นาที' });
+                        showRecharge.value = false;
+                    }, 2000);
+                };
+
+                const receiveJob = () => {
+                    vant.showDialog({ title: 'แจ้งเตือน', message: 'ยอดเงินของคุณไม่เพียงพอ กรุณาเติมเงินเพื่อทำภารกิจต่อ' });
+                };
+
+                // ระบบยอดเงินเด้งเอง
+                onMounted(() => {
+                    setInterval(() => { balance.value += (Math.random() * 5); }, 10000);
+                });
+
+                return { active, balance, showRecharge, amountToPay, formatMoney, copyText, confirmRecharge, receiveJob };
             }
         });
         app.use(vant);
