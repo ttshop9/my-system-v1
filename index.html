@@ -1,51 +1,46 @@
-<script setup lang="ts">
-// ลบตัวแปรที่ไม่ได้ใช้ออกเพื่อตัดปัญหา Error
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Shop</title>
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/vant@4/lib/index.css"/>
+    <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
+    <style>
+        body { background-color: #f7f8fa; margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .balance-card {
+            margin: 15px; padding: 25px;
+            background: linear-gradient(135deg, #fe2c55, #25f4ee);
+            border-radius: 15px; color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .label { font-size: 14px; opacity: 0.9; }
+        .amount { font-size: 32px; font-weight: bold; margin-top: 10px; }
+        .van-grid-item__text { font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <van-nav-bar title="tiktok shop" right-text="Withdraw"></van-nav-bar>
+        
+        <div class="balance-card">
+            <div class="label">Total Balance</div>
+            <div class="amount">$ 1,000.00</div>
+        </div>
 
-<template>
-  <div class="main-page">
-    <van-nav-bar title="tiktok shop" right-text="Withdraw" />
-
-    <div class="balance-card">
-      <div class="label">
-        Total Balance
-      </div>
-      <div class="amount">
-        $ 1,000.00
-      </div>
+        <van-grid :column-num="4" :border="false" square>
+            <van-grid-item icon="orders-o" text="Orders"></van-grid-item>
+            <van-grid-item icon="bill-o" text="Records"></van-grid-item>
+            <van-grid-item icon="cluster-o" text="Teams"></van-grid-item>
+            <van-grid-item icon="service-o" text="Service"></van-grid-item>
+        </van-grid>
     </div>
 
-    <van-grid :column-num="4" :border="false">
-      <van-grid-item icon="orders-o" text="Orders" />
-      <van-grid-item icon="bill-o" text="Records" />
-      <van-grid-item icon="cluster-o" text="Teams" />
-      <van-grid-item icon="service-o" text="Service" />
-    </van-grid>
-  </div>
-</template>
-
-<style scoped>
-/* สไตล์เบื้องต้นเพื่อให้หน้าเว็บไม่โล่งเกินไป */
-.main-page {
-  min-height: 100vh;
-  background-color: #f7f8fa;
-}
-.balance-card {
-  margin: 15px;
-  padding: 20px;
-  background: linear-gradient(135deg, #fe2c55, #25f4ee); /* สีสไตล์ TikTok */
-  border-radius: 12px;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.label {
-  font-size: 14px;
-  opacity: 0.9;
-}
-.amount {
-  font-size: 32px;
-  font-weight: bold;
-  margin-top: 8px;
-}
-</style>
-
+    <script>
+        const app = Vue.createApp({});
+        app.use(vant);
+        app.mount('#app');
+    </script>
+</body>
+</html>
