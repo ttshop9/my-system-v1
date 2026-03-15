@@ -2,43 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Shop - Work Platform</title>
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/vant@4/lib/index.css"/>
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
     <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
     <style>
-        body { background-color: #f7f8fa; margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-        .balance-card {
-            margin: 15px; padding: 25px;
-            background: linear-gradient(135deg, #fe2c55, #25f4ee);
-            border-radius: 15px; color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        body { background-color: #f0f2f5; margin: 0; font-family: -apple-system, sans-serif; }
+        .header-box { background: #000; color: #fff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .balance-section { 
+            background: linear-gradient(135deg, #1a1a1a, #4a4a4a); 
+            margin: 15px; padding: 20px; border-radius: 15px; color: #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-        .label { font-size: 14px; opacity: 0.9; }
-        .amount { font-size: 32px; font-weight: bold; margin-top: 10px; }
-        .van-grid-item__text { font-weight: 500; }
+        .notice-bar { background: #fff; margin-bottom: 10px; }
+        .mission-card { background: #fff; margin: 10px 15px; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .mission-info { display: flex; align-items: center; }
+        .mission-icon { width: 40px; height: 40px; background: #fe2c55; border-radius: 8px; margin-right: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
+        .withdraw-btn { background: #fe2c55; border: none; color: #fff; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
+        .floating-service { position: fixed; right: 20px; bottom: 80px; width: 50px; height: 50px; background: #25f4ee; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 999; }
     </style>
 </head>
 <body>
     <div id="app">
-        <van-nav-bar title="tiktok shop" right-text="Withdraw"></van-nav-bar>
-        
-        <div class="balance-card">
-            <div class="label">Total Balance</div>
-            <div class="amount">$ 1,000.00</div>
+        <div class="header-box">
+            <span style="font-weight: bold; font-size: 18px;">TikTok<span style="color:#fe2c55">Shop</span></span>
+            <van-icon name="setting-o" size="20"></van-icon>
         </div>
 
-        <van-grid :column-num="4" :border="false" square>
-            <van-grid-item icon="orders-o" text="Orders"></van-grid-item>
-            <van-grid-item icon="bill-o" text="Records"></van-grid-item>
-            <van-grid-item icon="cluster-o" text="Teams"></van-grid-item>
-            <van-grid-item icon="service-o" text="Service"></van-grid-item>
+        <van-notice-bar class="notice-bar" left-icon="volume-o" text="ยินดีด้วยกับคุณบัญชี 089***45xx ถอนเงินสำเร็จ 15,000 บาท, คุณบัญชี 061***99xx รับค่าคอมมิชชั่น 2,500 บาท..."></van-notice-bar>
+
+        <div class="balance-section">
+            <div style="font-size: 14px; opacity: 0.8;">ยอดเงินคงเหลือ (THB)</div>
+            <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">฿ 1,540.00</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="withdraw-btn" style="background: #fff; color: #000;">เติมเงิน</button>
+                <button class="withdraw-btn">ถอนเงิน</button>
+            </div>
+        </div>
+
+        <van-grid :column-num="4" :border="false" style="background: #fff; padding: 10px 0;">
+            <van-grid-item icon="records-o" text="ประวัติงาน"></van-grid-item>
+            <van-grid-item icon="balance-o" text="กระเป๋าเงิน"></van-grid-item>
+            <van-grid-item icon="friends-o" text="เชิญเพื่อน"></van-grid-item>
+            <van-grid-item icon="warn-o" text="เกี่ยวกับเรา"></van-grid-item>
         </van-grid>
+
+        <div style="padding: 10px 15px; font-weight: bold; color: #666;">ภารกิจวันนี้</div>
+        <div class="mission-card" v-for="i in 3" :key="i">
+            <div class="mission-info">
+                <div class="mission-icon"><van-icon name="shopping-cart-o" size="24"></van-icon></div>
+                <div>
+                    <div style="font-weight: bold;">ภารกิจโปรโมทสินค้าที่ {{i}}</div>
+                    <div style="font-size: 12px; color: #999;">ค่าคอมมิชชั่น: 15% - 25%</div>
+                </div>
+            </div>
+            <van-button size="small" type="primary" color="#fe2c55" round>รับงาน</van-button>
+        </div>
+
+        <div class="floating-service">
+            <van-icon name="service" size="30" color="#fff"></van-icon>
+        </div>
+
+        <van-tabbar v-model="active" active-color="#fe2c55">
+            <van-tabbar-item icon="home-o">หน้าแรก</van-tabbar-item>
+            <van-tabbar-item icon="description-o">ภารกิจ</van-tabbar-item>
+            <van-tabbar-item icon="manager-o">ข้อมูลส่วนตัว</van-tabbar-item>
+        </van-tabbar>
     </div>
 
     <script>
-        const app = Vue.createApp({});
+        const { createApp, ref } = Vue;
+        const app = createApp({
+            setup() {
+                const active = ref(0);
+                return { active };
+            }
+        });
         app.use(vant);
         app.mount('#app');
     </script>
