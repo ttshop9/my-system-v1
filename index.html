@@ -8,33 +8,39 @@
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
     <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
     <style>
-        /* ปรับพื้นหลังให้ขาวคลีนเหมือนแอปจริง */
-        body { background-color: #ffffff; color: #161823; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; }
+        /* 1. เปลี่ยนพื้นหลังเป็นสีขาวคลีนตามรูปที่พี่ต้องการ */
+        body { background-color: #ffffff; color: #161823; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; }
         
-        .header-logo { text-align: center; padding: 50px 0 30px 0; }
-        .header-logo img { width: 140px; }
+        /* 2. ปรับแต่ง Header ให้ดูเป็นทางการ */
+        .header-logo { text-align: center; padding: 45px 0 25px 0; }
+        .header-logo img { width: 150px; }
 
-        .auth-container { padding: 0 40px; }
-        
-        /* แถบเมนู เลือกเข้าสู่ระบบ/สมัครสมาชิก */
-        .tab-menu { display: flex; justify-content: space-around; margin-bottom: 30px; position: relative; }
-        .tab-item { font-size: 16px; color: #8a8b91; padding-bottom: 8px; cursor: pointer; }
-        .tab-item.active { color: #161823; font-weight: bold; border-bottom: 2px solid #fe2c55; }
+        /* 3. คืนค่าระบบ Tab เดิมของพี่ แต่ใช้สีแดง TikTok */
+        .tab-menu { display: flex; justify-content: center; gap: 40px; margin-bottom: 30px; border-bottom: 1px solid #f2f2f2; }
+        .tab-item { padding: 12px 0; font-size: 16px; color: #8a8b91; cursor: pointer; position: relative; }
+        .tab-item.active { color: #161823; font-weight: bold; }
+        .tab-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #fe2c55; }
 
-        /* ช่อง Input แบบเรียบๆ */
-        .van-field { background: #f8f8f8; border-radius: 2px; margin-bottom: 12px; padding: 10px 15px; border: none; }
-        .van-field__control { font-size: 15px; }
+        .auth-container { padding: 0 35px; }
+
+        /* 4. คืนค่า Input แบบเดิมที่พี่ทำไว้ (มีไอคอนและธงชาติ) แต่ปรับพื้นหลังให้เข้ากับธีมขาว */
+        .van-field { background: #f1f1f2; border-radius: 4px; margin-bottom: 15px; padding: 12px 16px; border: none; }
+        .van-field__control { color: #000; }
         
-        /* ปุ่มสีแดงอันเป็นเอกลักษณ์ของ TikTok */
-        .van-button--primary { background: #fe2c55; border: none; border-radius: 4px; height: 46px; font-weight: bold; font-size: 16px; }
+        /* 5. ปุ่มสีแดง TikTok ของแท้ */
+        .van-button--primary { background: #fe2c55; border: none; border-radius: 4px; height: 50px; font-weight: bold; font-size: 16px; margin-top: 15px; }
         
-        .footer-text { text-align: center; color: #fe2c55; font-size: 13px; margin-top: 25px; cursor: pointer; }
+        .footer-link { text-align: center; color: #fe2c55; font-size: 14px; margin-top: 30px; font-weight: 500; }
     </style>
 </head>
 <body>
     <div id="app">
+        <div style="position: absolute; right: 15px; top: 15px; font-size: 12px; color: #666;">
+            <img src="https://flagcdn.com/w20/th.png" width="16"> TH / <img src="https://flagcdn.com/w20/us.png" width="16"> EN
+        </div>
+
         <div class="header-logo">
-            <img src="https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/TikTok_Shop_logo.svg/1280px-TikTok_Shop_logo.svg.png" alt="TikTok Shop">
+            <img src="https://p16-va.lemon8cdn.com/tos-alisg-v-a3e477-sg/o8fA7I9AfEAnC7e8DAIBeAf8e9f2EAfADDAfA9~tplv-tej9nj120t-origin.webp" alt="TikTok Shop">
         </div>
 
         <div class="auth-container">
@@ -43,34 +49,59 @@
                 <div class="tab-item" :class="{active: !isLogin}" @click="isLogin = false">สมัครสมาชิก</div>
             </div>
 
-            <van-field v-model="username" placeholder="ชื่อผู้ใช้" />
-            <van-field v-model="password" type="password" placeholder="รหัสผ่าน" />
+            <van-field v-model="username" placeholder="เบอร์โทรศัพท์">
+                <template #left-icon>
+                    <div style="display: flex; align-items: center; gap: 5px; border-right: 1px solid #ddd; padding-right: 10px; margin-right: 10px;">
+                        <img src="https://flagcdn.com/w20/th.png" width="20">
+                        <span>+66</span>
+                    </div>
+                </template>
+            </van-field>
+
+            <van-field v-model="password" type="password" placeholder="รหัสผ่าน" left-icon="lock" />
             
-            <van-button block type="primary" @click="handleSubmit">
-                {{ isLogin ? 'เข้าสู่ระบบ' : 'ลงทะเบียน' }}
+            <van-field v-if="!isLogin" v-model="inviteCode" placeholder="ระบุรหัสแนะนำ (Invitation Code)" left-icon="friends-o" />
+
+            <van-button block type="primary" @click="handleAction">
+                {{ isLogin ? 'เข้าสู่ระบบ' : 'ลงทะเบียนระดับพรีเมียม' }}
             </van-button>
 
-            <div class="footer-text" v-if="!isLogin">
-                มีบัญชีอยู่แล้ว? <b>เข้าสู่ระบบที่นี่</b>
+            <div class="footer-link" @click="isLogin = !isLogin">
+                {{ isLogin ? 'ยังไม่มีบัญชี? สมัครสมาชิก' : 'มีบัญชีอยู่แล้ว? เข้าสู่ระบบที่นี่' }}
             </div>
         </div>
     </div>
 
     <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // ใช้ Config เดิมของพี่
+        const firebaseConfig = {
+            apiKey: "AIzaSyBf2BfaGTs6qQD3MO5tSZLLW-BuQFvDVwM",
+            authDomain: "my-trading-db.firebaseapp.com",
+            projectId: "my-trading-db",
+            storageBucket: "my-trading-db.firebasestorage.app",
+            messagingSenderId: "682968234759",
+            appId: "1:682968234759:web:eb2978d1e4019b77cb23a2"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         const { createApp, ref } = Vue;
         createApp({
             setup() {
-                const isLogin = ref(false); // เริ่มที่หน้าสมัครสมาชิกตามรูปพี่
+                const isLogin = ref(false);
                 const username = ref('');
                 const password = ref('');
+                const inviteCode = ref('');
 
-                const handleSubmit = () => {
-                    if(!username.value || !password.value) return vant.showFailToast('กรุณากรอกข้อมูล');
+                const handleAction = async () => {
+                    if (!username.value || !password.value) return vant.showFailToast('กรุณากรอกข้อมูล');
                     vant.showLoadingToast({ message: 'กำลังดำเนินการ...', forbidClick: true });
-                    // ระบบจะเชื่อมต่อ Firebase อัตโนมัติเหมือนที่เคยตั้งไว้
+                    // ... โค้ดส่วนเชื่อมต่อฐานข้อมูลเดิมของพี่ ...
                 };
-
-                return { isLogin, username, password, handleSubmit };
+                return { isLogin, username, password, inviteCode, handleAction };
             }
         }).use(vant).mount('#app');
     </script>
