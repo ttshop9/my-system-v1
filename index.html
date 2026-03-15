@@ -2,164 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok Shop - Business</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TKSHOP - Real System</title>
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/vant@4/lib/index.css"/>
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
     <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
-    <style>
-        body { background-color: #f7f8fa; margin: 0; font-family: -apple-system, sans-serif; }
-        .red { color: #fe2c55; }
-        /* หน้า Login */
-        .login-page { height: 100vh; background: #fff; padding: 40px 20px; text-align: center; }
-        .login-logo { font-size: 32px; font-weight: bold; margin-bottom: 40px; }
-        
-        /* หน้าหลัก */
-        .header-nav { background: #000; color: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .balance-card { background: #333; margin: 15px; padding: 25px; border-radius: 15px; color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .amount { font-size: 36px; font-weight: bold; margin: 10px 0; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-action { flex: 1; padding: 10px; border-radius: 20px; font-weight: bold; border: none; cursor: pointer; }
-        .btn-white { background: #fff; color: #000; }
-        .btn-red { background: #fe2c55; color: #fff; }
-        
-        /* ภารกิจ */
-        .mission-card { background: #fff; margin: 10px 15px; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .m-icon { width: 45px; height: 45px; background: #fe2c55; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
-    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBf2BfaGTs6qQD3MO5tSZLLW-BuQFvDVwM",
+            authDomain: "my-trading-db.firebaseapp.com",
+            projectId: "my-trading-db",
+            storageBucket: "my-trading-db.firebasestorage.app",
+            messagingSenderId: "682968234759",
+            appId: "1:682968234759:web:eb2978d1e4019b77cb23a2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- ส่วนของ Vue App ---
+        const { createApp, ref } = Vue;
+        createApp({
+            setup() {
+                const currPage = ref('login');
+                const userForm = ref({ name: '', pass: '' });
+                const userData = ref({ balance: 0, status: 'pending' });
+
+                // ฟังก์ชันสมัครสมาชิก (เดินจริง: ส่งข้อมูลเข้า DB)
+                const doRegister = async () => {
+                    if(!userForm.value.name) return vant.showToast('กรุณากรอกชื่อ');
+                    await setDoc(doc(db, "users", userForm.value.name), {
+                        pass: userForm.value.pass,
+                        balance: 0,
+                        status: 'pending', // รอพี่กดอนุมัติ
+                        createdAt: new Date()
+                    });
+                    vant.showDialog({ title: 'สำเร็จ', message: 'สมัครแล้ว! รอแอดมินอนุมัติ' });
+                };
+
+                // ฟังก์ชันเข้าสู่ระบบ (เดินจริง: เช็กกับ DB)
+                const doLogin = async () => {
+                    const docRef = doc(db, "users", userForm.value.name);
+                    const docSnap = await getDoc(docRef);
+                    
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if(data.pass === userForm.value.pass) {
+                            if(data.status === 'active') {
+                                userData.value = data;
+                                currPage.value = 'home';
+                            } else {
+                                vant.showDialog({ message: 'บัญชีนี้ยังไม่ได้รับอนุมัติ' });
+                            }
+                        } else {
+                            vant.showToast('รหัสผ่านผิด');
+                        }
+                    } else {
+                        vant.showToast('ไม่พบผู้ใช้งาน');
+                    }
+                };
+
+                return { currPage, userForm, userData, doRegister, doLogin };
+            }
+        }).use(vant).mount('#app');
+    </script>
 </head>
 <body>
     <div id="app">
-        <div v-if="currPage === 'login'" class="login-page">
-            <div class="login-logo">TikTok<span class="red">Shop</span></div>
-            <van-tabs v-model:active="loginTab" color="#fe2c55">
+        <div v-if="currPage === 'login'" style="padding: 20px;">
+            <h2 style="text-align:center;">TikTok<span style="color:red;">Shop</span></h2>
+            <van-tabs color="#fe2c55">
                 <van-tab title="เข้าสู่ระบบ">
-                    <van-cell-group inset style="margin-top:20px;">
-                        <van-field v-model="user.name" label="ชื่อผู้ใช้" placeholder="กรุณากรอกยูสเซอร์เนม"></van-field>
-                        <van-field v-model="user.pass" label="รหัสผ่าน" type="password" placeholder="กรุณากรอกรหัสผ่าน"></van-field>
-                    </van-cell-group>
-                    <div style="margin: 25px 16px;"><van-button block color="#000" round @click="doLogin">เข้าสู่ระบบ</van-button></div>
+                    <van-field v-model="userForm.name" label="ชื่อผู้ใช้" placeholder="Username"></van-field>
+                    <van-field v-model="userForm.pass" type="password" label="รหัสผ่าน" placeholder="Password"></van-field>
+                    <van-button block color="#000" @click="doLogin" style="margin-top:20px;">เข้าสู่ระบบ</van-button>
                 </van-tab>
                 <van-tab title="สมัครสมาชิก">
-                    <van-cell-group inset style="margin-top:20px;">
-                        <van-field label="ชื่อผู้ใช้" placeholder="ตั้งชื่อยูสเซอร์เนม"></van-field>
-                        <van-field label="รหัสผ่าน" type="password" placeholder="ตั้งรหัสผ่าน"></van-field>
-                        <van-field label="ยืนยันรหัส" type="password" placeholder="กรอกรหัสอีกครั้ง"></van-field>
-                        <van-field label="รหัสแนะนำ" placeholder="กรอกรหัสผู้แนะนำ (ถ้ามี)"></van-field>
-                    </van-cell-group>
-                    <div style="margin: 25px 16px;"><van-button block color="#fe2c55" round @click="vant.showToast('สมัครสำเร็จ!')">ลงทะเบียน</van-button></div>
+                    <van-field v-model="userForm.name" label="ชื่อผู้ใช้" placeholder="Username"></van-field>
+                    <van-field v-model="userForm.pass" type="password" label="รหัสผ่าน" placeholder="Password"></van-field>
+                    <van-button block color="#fe2c55" @click="doRegister" style="margin-top:20px;">ลงทะเบียน</van-button>
                 </van-tab>
             </van-tabs>
         </div>
 
         <div v-if="currPage === 'home'">
-            <div class="header-nav">
-                <span style="font-size: 20px; font-weight: bold;">TikTok<span class="red">Shop</span></span>
-                <van-icon name="setting-o" size="22" @click="currPage = 'profile'"></van-icon>
+            <van-nav-bar title="หน้าหลัก"></van-nav-bar>
+            <div style="padding:20px; background:#333; color:#fff; margin:15px; border-radius:15px;">
+                <p>ยอดเงินคงเหลือ (USD)</p>
+                <h1>$ {{ userData.balance.toFixed(2) }}</h1>
             </div>
-            <van-notice-bar left-icon="volume-o" text="ยินดีด้วยกับคุณบัญชี 089***45xx ถอนเงินสำเร็จ $ 500.00..."></van-notice-bar>
-            <div class="balance-card">
-                <div style="font-size: 14px; opacity: 0.8;">ยอดเงินคงเหลือสะสม (USD)</div>
-                <div class="amount">$ {{ balance.toFixed(2) }}</div>
-                <div class="btn-group">
-                    <button class="btn-action btn-white" @click="showRecharge = true">เติมเงิน</button>
-                    <button class="btn-action btn-red" @click="showWithdraw = true">ถอนเงิน</button>
-                </div>
-            </div>
-            <van-grid :column-num="4" :border="false">
-                <van-grid-item icon="notes-o" text="ประวัติงาน" @click="vant.showToast('ยังไม่มีประวัติ')"></van-grid-item>
-                <van-grid-item icon="idcard" text="กระเป๋าเงิน" @click="currPage = 'profile'"></van-grid-item>
-                <van-grid-item icon="friends-o" text="เชิญเพื่อน" @click="vant.showDialog({title:'รหัสเชิญ', message:'รหัสของคุณคือ: TK8899'})"></van-grid-item>
-                <van-grid-item icon="info-o" text="เกี่ยวกับเรา" @click="vant.showDialog({title:'TikTok Shop', message:'แพลตฟอร์มโปรโมทสินค้าอันดับ 1'})"></van-grid-item>
-            </van-grid>
-            <div style="padding: 15px; font-weight: bold;">ภารกิจวันนี้</div>
-            <div v-for="i in 3" :key="i" class="mission-card">
-                <div style="display:flex; align-items:center;">
-                    <div class="m-icon"><van-icon name="shopping-cart" color="#fff" size="22"></van-icon></div>
-                    <div><div style="font-weight:bold;">ภารกิจที่ {{i}}</div><div style="font-size:12px; color:#999;">คอมมิชชั่น 20%</div></div>
-                </div>
-                <van-button size="small" type="danger" round @click="vant.showToast('เริ่มงาน!')">รับงาน</van-button>
-            </div>
+            <p style="text-align:center; color:#999;">นี่คือข้อมูลจริงจากฐานข้อมูลของพี่</p>
         </div>
-
-        <div v-if="currPage === 'profile'" style="padding-bottom: 60px;">
-            <van-nav-bar title="ข้อมูลส่วนตัว" left-arrow @click-left="currPage = 'home'"></van-nav-bar>
-            <div style="background:#000; padding: 40px 20px; color:#fff; text-align:center;">
-                <van-image round width="80" height="80" src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg"></van-image>
-                <div style="margin-top:10px; font-size:18px;">คุณ {{user.name || 'สมาชิก'}}</div>
-                <div style="font-size:12px; opacity:0.7;">ID: 8854729</div>
-            </div>
-            <van-cell-group title="ตั้งค่าบัญชี">
-                <van-cell title="บันทึกเลขบัญชี" is-link icon="card"></van-cell>
-                <van-cell title="เปลี่ยนรหัสผ่าน" is-link icon="lock"></van-cell>
-                <van-cell title="ประวัติการถอนเงิน" is-link icon="passed"></van-cell>
-            </van-cell-group>
-            <div style="margin: 20px 16px;"><van-button block plain type="danger" round @click="currPage = 'login'">ออกจากระบบ</van-button></div>
-        </div>
-
-        <van-popup v-model:show="showWithdraw" position="bottom" round closeable :style="{ height: '75%' }">
-            <div style="padding-top:25px;">
-                <h3 style="text-align:center; margin-bottom:25px;">แจ้งถอนเงิน</h3>
-                <van-cell-group inset>
-                    <van-field v-model="form.name" label="ชื่อ-นามสกุล" placeholder="ชื่อจริง" input-align="right"></van-field>
-                    <van-field v-model="form.bank" is-link readonly label="ธนาคาร" placeholder="เลือกธนาคาร" @click="showPicker = true" input-align="right"></van-field>
-                    <van-field v-model="form.acc" label="เลขบัญชี" placeholder="ระบุเลขบัญชี" type="digit" input-align="right"></van-field>
-                    <van-field v-model="form.amount" label="จำนวนเงิน" placeholder="ระบุยอด $" type="number" input-align="right"></van-field>
-                </van-cell-group>
-                <div style="padding: 20px;"><van-button block color="#000" round @click="submitWithdraw">ยืนยันการถอนเงิน</van-button></div>
-            </div>
-        </van-popup>
-
-        <van-popup v-model:show="showRecharge" position="bottom" round closeable :style="{ height: '50%' }">
-            <div style="padding:25px; text-align:center;">
-                <h3>เติมเงิน</h3>
-                <p>กรุณาติดต่อฝ่ายบริการลูกค้าเพื่อขอรับเลขบัญชีเติมเงิน</p>
-                <van-button block color="#fe2c55" round icon="chat-o" @click="vant.showToast('กำลังเชื่อมต่อเจ้าหน้าที่...')">ติดต่อแอดมิน</van-button>
-            </div>
-        </van-popup>
-
-        <van-popup v-model:show="showPicker" position="bottom" round>
-            <van-picker title="เลือกธนาคาร" :columns="banks" @confirm="onBankConfirm" @cancel="showPicker = false"></van-picker>
-        </van-popup>
-
-        <van-tabbar v-if="currPage !== 'login'" v-model="activeTab" active-color="#fe2c55" @change="tabChange">
-            <van-tabbar-item icon="home-o" name="home">หน้าแรก</van-tabbar-item>
-            <van-tabbar-item icon="description-o" name="mission">ภารกิจ</van-tabbar-item>
-            <van-tabbar-item icon="contact-o" name="profile">ข้อมูลส่วนตัว</van-tabbar-item>
-        </van-tabbar>
     </div>
-
-    <script>
-        const { createApp, ref } = Vue;
-        const app = createApp({
-            setup() {
-                const currPage = ref('login');
-                const loginTab = ref(0);
-                const activeTab = ref('home');
-                const balance = ref(1540.00);
-                const showWithdraw = ref(false);
-                const showRecharge = ref(false);
-                const showPicker = ref(false);
-                const user = ref({ name: '', pass: '' });
-                const form = ref({ name: '', bank: '', acc: '', amount: '' });
-                const banks = [{ text: 'กสิกรไทย' }, { text: 'ไทยพาณิชย์' }, { text: 'กรุงเทพ' }, { text: 'กรุงไทย' }];
-
-                const doLogin = () => {
-                    if(!user.value.name) return vant.showToast('กรุณากรอกชื่อ');
-                    currPage.value = 'home';
-                };
-                const tabChange = (name) => { if(name === 'home' || name === 'profile') currPage.value = name; else vant.showToast('กำลังเปิดภารกิจ...'); };
-                const onBankConfirm = ({ selectedOptions }) => { form.value.bank = selectedOptions[0].text; showPicker.value = false; };
-                const submitWithdraw = () => {
-                    vant.showDialog({ title: 'ส่งเรื่องแล้ว', message: 'ตรวจสอบ 15-30 นาที' });
-                    showWithdraw.value = false;
-                };
-
-                return { currPage, loginTab, activeTab, balance, showWithdraw, showRecharge, showPicker, user, form, banks, doLogin, tabChange, onBankConfirm, submitWithdraw, vant };
-            }
-        });
-        app.use(vant);
-        app.mount('#app');
-    </script>
 </body>
 </html>
