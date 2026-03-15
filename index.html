@@ -8,34 +8,31 @@
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
     <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
     <style>
-        /* 1. เปลี่ยนพื้นหลังเป็นสีขาวคลีนตามรูปที่พี่ต้องการ */
-        body { background-color: #ffffff; color: #161823; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; }
+        /* 1. เปลี่ยนแค่สีพื้นหลังเป็นขาวคลีน */
+        body { background-color: #ffffff; color: #161823; font-family: sans-serif; margin: 0; }
         
-        /* 2. ปรับแต่ง Header ให้ดูเป็นทางการ */
-        .header-logo { text-align: center; padding: 45px 0 25px 0; }
-        .header-logo img { width: 150px; }
+        .header-logo { text-align: center; padding: 40px 0 20px 0; }
+        .header-logo img { width: 140px; }
 
-        /* 3. คืนค่าระบบ Tab เดิมของพี่ แต่ใช้สีแดง TikTok */
-        .tab-menu { display: flex; justify-content: center; gap: 40px; margin-bottom: 30px; border-bottom: 1px solid #f2f2f2; }
-        .tab-item { padding: 12px 0; font-size: 16px; color: #8a8b91; cursor: pointer; position: relative; }
-        .tab-item.active { color: #161823; font-weight: bold; }
-        .tab-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #fe2c55; }
+        .auth-container { padding: 0 30px; }
 
-        .auth-container { padding: 0 35px; }
+        /* 2. เมนูเลือก เข้าสู่ระบบ/สมัครสมาชิก ใช้สีแดง TikTok */
+        .tab-menu { display: flex; justify-content: center; gap: 40px; margin-bottom: 25px; border-bottom: 1px solid #f2f2f2; }
+        .tab-item { padding: 10px 0; font-size: 16px; color: #8a8b91; cursor: pointer; }
+        .tab-item.active { color: #161823; font-weight: bold; border-bottom: 2px solid #fe2c55; }
 
-        /* 4. คืนค่า Input แบบเดิมที่พี่ทำไว้ (มีไอคอนและธงชาติ) แต่ปรับพื้นหลังให้เข้ากับธีมขาว */
-        .van-field { background: #f1f1f2; border-radius: 4px; margin-bottom: 15px; padding: 12px 16px; border: none; }
-        .van-field__control { color: #000; }
+        /* 3. คืนค่าช่อง Input แบบเดิมของพี่ แต่ใช้โทนสีสว่าง */
+        .van-field { background: #f1f1f2; border-radius: 4px; margin-bottom: 15px; padding: 10px 16px; border: none; }
         
-        /* 5. ปุ่มสีแดง TikTok ของแท้ */
-        .van-button--primary { background: #fe2c55; border: none; border-radius: 4px; height: 50px; font-weight: bold; font-size: 16px; margin-top: 15px; }
+        /* 4. ปุ่มสีแดง TikTok ของแท้ */
+        .van-button--primary { background: #fe2c55; border: none; border-radius: 4px; height: 48px; font-weight: bold; font-size: 16px; }
         
-        .footer-link { text-align: center; color: #fe2c55; font-size: 14px; margin-top: 30px; font-weight: 500; }
+        .footer-link { text-align: center; color: #fe2c55; font-size: 13px; margin-top: 25px; }
     </style>
 </head>
 <body>
     <div id="app">
-        <div style="position: absolute; right: 15px; top: 15px; font-size: 12px; color: #666;">
+        <div style="position: absolute; right: 15px; top: 15px; font-size: 12px; color: #8a8b91;">
             <img src="https://flagcdn.com/w20/th.png" width="16"> TH / <img src="https://flagcdn.com/w20/us.png" width="16"> EN
         </div>
 
@@ -49,11 +46,11 @@
                 <div class="tab-item" :class="{active: !isLogin}" @click="isLogin = false">สมัครสมาชิก</div>
             </div>
 
-            <van-field v-model="username" placeholder="เบอร์โทรศัพท์">
+            <van-field v-model="phone" placeholder="เบอร์โทรศัพท์">
                 <template #left-icon>
-                    <div style="display: flex; align-items: center; gap: 5px; border-right: 1px solid #ddd; padding-right: 10px; margin-right: 10px;">
-                        <img src="https://flagcdn.com/w20/th.png" width="20">
-                        <span>+66</span>
+                    <div style="display: flex; align-items: center; gap: 5px; border-right: 1px solid #ccc; padding-right: 8px; margin-right: 10px;">
+                        <img src="https://flagcdn.com/w20/th.png" width="18">
+                        <span style="color: #000;">+66</span>
                     </div>
                 </template>
             </van-field>
@@ -74,9 +71,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ใช้ Config เดิมของพี่
         const firebaseConfig = {
             apiKey: "AIzaSyBf2BfaGTs6qQD3MO5tSZLLW-BuQFvDVwM",
             authDomain: "my-trading-db.firebaseapp.com",
@@ -92,16 +88,16 @@
         createApp({
             setup() {
                 const isLogin = ref(false);
-                const username = ref('');
+                const phone = ref('');
                 const password = ref('');
                 const inviteCode = ref('');
 
                 const handleAction = async () => {
-                    if (!username.value || !password.value) return vant.showFailToast('กรุณากรอกข้อมูล');
+                    if (!phone.value || !password.value) return vant.showFailToast('กรุณากรอกข้อมูล');
                     vant.showLoadingToast({ message: 'กำลังดำเนินการ...', forbidClick: true });
-                    // ... โค้ดส่วนเชื่อมต่อฐานข้อมูลเดิมของพี่ ...
+                    // เชื่อมต่อ DB เดิมที่พี่ตั้งไว้
                 };
-                return { isLogin, username, password, inviteCode, handleAction };
+                return { isLogin, phone, password, inviteCode, handleAction };
             }
         }).use(vant).mount('#app');
     </script>
