@@ -1,61 +1,128 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok Shop - Work Platform</title>
-    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/vant@4/lib/index.css"/>
-    <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
-    <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
-    <style>
-        body { background-color: #f0f2f5; margin: 0; font-family: -apple-system, sans-serif; }
-        .header-box { background: #000; color: #fff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
-        .balance-section { 
-            background: linear-gradient(135deg, #1a1a1a, #4a4a4a); 
-            margin: 15px; padding: 25px; border-radius: 15px; color: #fff;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .balance-amount { font-size: 36px; font-weight: bold; margin: 10px 0; color: #25f4ee; }
-        .withdraw-btn { background: #fe2c55; border: none; color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; }
-        .popup-content { padding: 20px; }
-    </style>
-</head>
-<body>
-    <div id="app">
-        <div class="header-box">
-            <span style="font-weight: bold; font-size: 20px;">TikTok<span style="color:#fe2c55">Shop</span></span>
-            <van-icon name="setting-o" size="22"></van-icon>
+<script setup lang="ts">
+import { ref } from 'vue'
+import { showToast, showDialog } from 'vant'
+
+const balance = ref(1540.00)
+const showWithdraw = ref(false)
+const showBankPicker = ref(false)
+
+// ฟอร์มถอนเงิน 4 ช่องตามที่พี่ต้องการ
+const withdrawForm = ref({
+  name: '',
+  bank: '',
+  accountNumber: '',
+  amount: ''
+})
+
+const bankColumns = [
+  { text: 'กสิกรไทย', value: 'K-Bank' },
+  { text: 'ไทยพาณิชย์', value: 'SCB' },
+  { text: 'กรุงเทพ', value: 'BBL' },
+  { text: 'กรุงไทย', value: 'KTB' },
+  { text: 'ออมสิน', value: 'GSB' }
+]
+
+const onBankConfirm = ({ selectedOptions }: any) => {
+  withdrawForm.value.bank = selectedOptions[0].text
+  showBankPicker.value = false
+}
+
+const handleWithdraw = () => {
+  if (!withdrawForm.value.name || !withdrawForm.value.bank || !withdrawForm.value.accountNumber || !withdrawForm.value.amount) {
+    showToast('กรุณากรอกข้อมูลให้ครบทุกช่อง')
+    return
+  }
+  showDialog({
+    title: 'ส่งคำขอสำเร็จ',
+    message: 'ระบบกำลังตรวจสอบข้อมูลการถอนเงินของท่าน โปรดรอ 15-30 นาที',
+  }).then(() => {
+    showWithdraw.value = false
+  })
+}
+
+const formatMoney = (val: number) => {
+  return val.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
+}
+</script>
+
+<template>
+  <div class="main-page">
+    <div class="header-nav">
+      <span class="logo">TikTok<span class="red">Shop</span></span>
+      <van-icon name="setting-o" size="20" />
+    </div>
+
+    <div class="balance-card">
+      <div class="label">ยอดเงินคงเหลือสะสม (THB)</div>
+      <div class="amount">฿ {{ formatMoney(balance) }}</div>
+      <div class="btn-group">
+        <div class="btn white">เติมเงิน</div>
+        <div class="btn red" @click="showWithdraw = true">ถอนเงิน</div>
+      </div>
+    </div>
+
+    <van-grid :column-num="4" :border="false" class="menu-grid">
+      <van-grid-item icon="records-o" text="ประวัติงาน" />
+      <van-grid-item icon="balance-o" text="กระเป๋าเงิน" />
+      <van-grid-item icon="friends-o" text="เชิญเพื่อน" />
+      <van-grid-item icon="warn-o" text="เกี่ยวกับเรา" />
+    </van-grid>
+
+    <div class="mission-title">ภารกิจวันนี้</div>
+    <div v-for="i in 3" :key="i" class="mission-item">
+      <div class="m-info">
+        <div class="m-icon"><van-icon name="shopping-cart" color="#fff" /></div>
+        <div class="m-text">
+          <div class="m-name">ภารกิจโปรโมทสินค้าที่ {{ i }}</div>
+          <div class="m-desc">ค่าคอมมิชชั่น: 15% - 25%</div>
         </div>
+      </div>
+      <van-button size="small" type="danger" round @click="showWithdraw = true">รับงาน</van-button>
+    </div>
 
-        <div class="balance-section">
-            <div style="font-size: 14px; opacity: 0.8;">ยอดเงินคงเหลือสะสม (THB)</div>
-            <div class="balance-amount">฿ {{ formatMoney(balance) }}</div>
-            <div style="display: flex; gap: 12px; margin-top: 15px;">
-                <button class="withdraw-btn" style="background: #fff; color: #000;" @click="showRecharge = true">เติมเงิน</button>
-                <button class="withdraw-btn" @click="showWithdraw = true">ถอนเงิน</button>
-            </div>
+    <van-popup v-model:show="showWithdraw" position="bottom" round closeable :style="{ height: '80%' }">
+      <div class="popup-inner">
+        <h3>แจ้งถอนเงิน</h3>
+        <van-cell-group inset>
+          <van-field v-model="withdrawForm.name" label="ชื่อ-นามสกุล" placeholder="กรอกชื่อจริง" input-align="right" />
+          <van-field v-model="withdrawForm.bank" is-link readonly label="ธนาคาร" placeholder="เลือกธนาคาร" @click="showBankPicker = true" input-align="right" />
+          <van-field v-model="withdrawForm.accountNumber" label="เลขบัญชี" placeholder="ระบุเลขบัญชี" type="digit" input-align="right" />
+          <van-field v-model="withdrawForm.amount" label="จำนวนเงิน" placeholder="ยอดที่ต้องการถอน" type="number" input-align="right" />
+        </van-cell-group>
+        <div class="notice-box">
+          * การถอนเงินจะใช้เวลาตรวจสอบ 15-30 นาที<br>
+          * บัญชีปลายทางต้องตรงกับชื่อที่ระบุเท่านั้น
         </div>
-
-        <div style="padding: 10px 15px; font-weight: bold; color: #333;">ภารกิจประจำวัน</div>
-        <div v-for="i in 3" :key="i" style="background:#fff; margin:10px 15px; padding:15px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-            <span>ภารกิจโปรโมทสินค้าที่ {{i + 500}}</span>
-            <van-button size="small" type="primary" color="#fe2c55" round @click="showWithdraw = true">รับงาน</van-button>
+        <div style="padding: 20px;">
+          <van-button block color="#000" round @click="handleWithdraw">ยืนยันการถอนเงิน</van-button>
         </div>
+      </div>
+    </van-popup>
 
-        <van-popup v-model:show="showWithdraw" position="bottom" round closeable :style="{ height: '80%' }">
-            <div class="popup-content">
-                <h3 style="text-align:center; margin-bottom: 20px;">แจ้งถอนเงิน</h3>
-                <van-cell-group inset>
-                    <van-field v-model="withdrawForm.name" label="ชื่อ-นามสกุล" placeholder="กรุณากรอกชื่อจริง" input-align="right" />
-                    <van-field v-model="withdrawForm.bank" is-link readonly label="ธนาคาร" placeholder="เลือกธนาคาร" @click="showBankPicker = true" input-align="right" />
-                    <van-field v-model="withdrawForm.accountNumber" label="เลขบัญชี" placeholder="ระบุเลขบัญชี" type="digit" input-align="right" />
-                    <van-field v-model="withdrawForm.amount" label="จำนวนเงิน" placeholder="ยอดเงินที่ถอน" type="number" input-align="right" />
-                </van-cell-group>
-                <div style="margin: 25px 15px; font-size: 12px; color: #ee0a24;">* หมายเหตุ: บัญชีปลายทางต้องมีชื่อตรงกับที่ระบุไว้เท่านั้น</div>
-                <div style="margin: 20px 15px;">
-                    <van-button block color="#000" round @click="confirmAction('ถอนเงิน')">ยืนยันการถอนเงิน</van-button>
-                </div>
-            </div>
-        </van-popup>
+    <van-popup v-model:show="showBankPicker" position="bottom" round>
+      <van-picker title="เลือกธนาคาร" :columns="bankColumns" @confirm="onBankConfirm" @cancel="showBankPicker = false" />
+    </van-popup>
+  </div>
+</template>
 
-        <van-popup v-model:show="showRecharge" position="bottom" round closeable :style="{ height: '65%' }">
+<style scoped>
+.main-page { background: #f5f5f5; min-height: 100vh; padding-bottom: 50px; }
+.header-nav { background: #000; color: #fff; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+.logo { font-weight: bold; font-size: 18px; }
+.red { color: #fe2c55; }
+.balance-card { background: #333; margin: 15px; padding: 25px; border-radius: 15px; color: #fff; }
+.amount { font-size: 32px; font-weight: bold; margin: 10px 0; color: #25f4ee; }
+.btn-group { display: flex; gap: 10px; margin-top: 15px; }
+.btn { padding: 8px 25px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; }
+.btn.white { background: #fff; color: #000; }
+.btn.red { background: #fe2c55; color: #fff; }
+.mission-title { padding: 15px; font-weight: bold; }
+.mission-item { background: #fff; margin: 0 15px 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+.m-info { display: flex; align-items: center; }
+.m-icon { width: 40px; height: 40px; background: #fe2c55; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
+.m-name { font-weight: bold; font-size: 14px; }
+.m-desc { font-size: 12px; color: #999; }
+.popup-inner { padding: 20px 0; }
+.popup-inner h3 { text-align: center; margin-bottom: 20px; }
+.notice-box { margin: 15px; padding: 10px; background: #fffbe6; color: #ed6a0c; font-size: 12px; border-radius: 5px; }
+</style>
