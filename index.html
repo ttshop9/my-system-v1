@@ -18,8 +18,8 @@
         .balance-amount { font-size: 36px; font-weight: bold; margin: 10px 0; color: #25f4ee; }
         .withdraw-btn { background: #fe2c55; border: none; color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; }
         
-        /* สไตล์หน้าต่างเติมเงิน */
-        .recharge-content { padding: 20px; text-align: center; }
+        /* สไตล์ Popup */
+        .popup-content { padding: 20px; }
         .bank-card { background: #f8f8f8; border: 1px dashed #ccc; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left; }
         .bank-label { font-size: 12px; color: #666; }
         .bank-value { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 5px; display: flex; justify-content: space-between; }
@@ -38,41 +38,73 @@
             <div class="balance-amount">฿ {{ formatMoney(balance) }}</div>
             <div style="display: flex; gap: 12px; margin-top: 15px;">
                 <button class="withdraw-btn" style="background: #fff; color: #000;" @click="showRecharge = true">เติมเงิน</button>
-                <button class="withdraw-btn" @click="receiveJob">ถอนเงิน</button>
+                <button class="withdraw-btn" @click="showWithdraw = true">ถอนเงิน</button>
             </div>
         </div>
 
         <div style="padding: 10px 15px; font-weight: bold; color: #333;">ภารกิจประจำวัน</div>
         <div v-for="i in 3" :key="i" style="background:#fff; margin:10px 15px; padding:15px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
             <span>ภารกิจโปรโมทสินค้าที่ {{i + 500}}</span>
-            <van-button size="small" type="primary" color="#fe2c55" round @click="receiveJob">รับงาน</van-button>
+            <van-button size="small" type="primary" color="#fe2c55" round @click="showWithdraw = true">รับงาน</van-button>
         </div>
 
-        <van-popup v-model:show="showRecharge" position="bottom" round closeable :style="{ height: '60%' }">
-            <div class="recharge-content">
-                <h3 style="margin-top: 0;">เติมเงินเข้าระบบ</h3>
-                <p style="color: #999; font-size: 13px;">กรุณาโอนเงินไปยังบัญชีด้านล่างเพื่อเพิ่มยอดเงิน</p>
-                
+        <van-popup v-model:show="showRecharge" position="bottom" round closeable :style="{ height: '65%' }">
+            <div class="popup-content">
+                <h3 style="text-align:center;">เติมเงินเข้าระบบ</h3>
                 <div class="bank-card">
                     <div class="bank-label">ธนาคาร</div>
                     <div class="bank-value">กสิกรไทย (K-Bank)</div>
-                    
                     <div class="bank-label">เลขบัญชี</div>
                     <div class="bank-value">
                         <span>123-4-56789-0</span>
                         <span class="copy-btn" @click="copyText('1234567890')">คัดลอก</span>
                     </div>
-                    
                     <div class="bank-label">ชื่อบัญชี</div>
                     <div class="bank-value">บจก. ติ๊กต็อก ช็อป (ไทยแลนด์)</div>
                 </div>
-
-                <van-field v-model="amountToPay" type="number" label="จำนวนเงิน" placeholder="ระบุจำนวนที่โอน" border></van-field>
-                
+                <van-field v-model="amountToPay" type="number" label="จำนวนเงิน" placeholder="ระบุจำนวนที่โอน"></van-field>
                 <div style="margin-top: 20px;">
-                    <van-button block color="#fe2c55" round @click="confirmRecharge">แจ้งโอนเงิน</van-button>
+                    <van-button block color="#fe2c55" round @click="confirmAction('เติมเงิน')">แจ้งโอนเงิน</van-button>
                 </div>
             </div>
+        </van-popup>
+
+        <van-popup v-model:show="showWithdraw" position="bottom" round closeable :style="{ height: '75%' }">
+            <div class="popup-content">
+                <h3 style="text-align:center;">ถอนเงิน</h3>
+                <van-cell-group inset>
+                    <van-field v-model="withdrawForm.name" label="ชื่อบัญชี" placeholder="ระบุชื่อ-นามสกุล" />
+                    
+                    <van-field
+                      v-model="withdrawForm.bank"
+                      is-link
+                      readonly
+                      label="ธนาคาร"
+                      placeholder="เลือกธนาคาร"
+                      @click="showBankPicker = true"
+                    />
+                    
+                    <van-field v-model="withdrawForm.accountNumber" label="เลขบัญชี" placeholder="ระบุเลขบัญชีธนาคาร" type="digit" />
+                    <van-field v-model="withdrawForm.amount" label="จำนวนเงิน" placeholder="ระบุยอดที่ต้องการถอน" type="number" />
+                </van-cell-group>
+
+                <div style="margin: 20px 15px; font-size: 12px; color: #ee0a24;">
+                    * หมายเหตุ: การถอนเงินอาจใช้เวลา 15-30 นาทีในการตรวจสอบความถูกต้องของภารกิจ
+                </div>
+
+                <div style="margin: 20px 15px;">
+                    <van-button block color="#000" round @click="confirmAction('ถอนเงิน')">ยืนยันการถอนเงิน</van-button>
+                </div>
+            </div>
+        </van-popup>
+
+        <van-popup v-model:show="showBankPicker" position="bottom" round>
+          <van-picker
+            title="เลือกธนาคาร"
+            :columns="bankColumns"
+            @confirm="onBankConfirm"
+            @cancel="showBankPicker = false"
+          />
         </van-popup>
 
         <van-tabbar v-model="active" active-color="#fe2c55">
@@ -83,40 +115,54 @@
     </div>
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref } = Vue;
         const app = createApp({
             setup() {
                 const active = ref(0);
                 const balance = ref(1540.00);
                 const showRecharge = ref(false);
+                const showWithdraw = ref(false);
+                const showBankPicker = ref(false);
                 const amountToPay = ref('');
+
+                const withdrawForm = ref({ name: '', bank: '', accountNumber: '', amount: '' });
+                const bankColumns = [
+                    { text: 'กสิกรไทย', value: 'K-Bank' },
+                    { text: 'ไทยพาณิชย์', value: 'SCB' },
+                    { text: 'กรุงเทพ', value: 'BBL' },
+                    { text: 'กรุงไทย', value: 'KTB' },
+                    { text: 'ออมสิน', value: 'GSB' }
+                ];
 
                 const formatMoney = (val) => val.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
 
                 const copyText = (text) => {
                     navigator.clipboard.writeText(text);
-                    vant.showSuccessToast('คัดลอกเลขบัญชีแล้ว');
+                    vant.showSuccessToast('คัดลอกแล้ว');
                 };
 
-                const confirmRecharge = () => {
-                    if(!amountToPay.value) return vant.showFailToast('กรุณาระบุจำนวนเงิน');
-                    vant.showLoadingToast({ message: 'กำลังตรวจสอบ...', forbidClick: true });
+                const onBankConfirm = ({ selectedOptions }) => {
+                    withdrawForm.value.bank = selectedOptions[0].text;
+                    showBankPicker.value = false;
+                };
+
+                const confirmAction = (type) => {
+                    vant.showLoadingToast({ message: 'กำลังดำเนินการ...', forbidClick: true });
                     setTimeout(() => {
-                        vant.showDialog({ title: 'สำเร็จ', message: 'ส่งข้อมูลแจ้งโอนแล้ว กรุณารอระบบตรวจสอบภายใน 5-10 นาที' });
+                        vant.showDialog({ 
+                            title: 'ระบบรับข้อมูลแล้ว', 
+                            message: `การ${type}ของคุณอยู่ระหว่างการตรวจสอบ กรุณารอ 15-30 นาที` 
+                        });
                         showRecharge.value = false;
+                        showWithdraw.value = false;
                     }, 2000);
                 };
 
-                const receiveJob = () => {
-                    vant.showDialog({ title: 'แจ้งเตือน', message: 'ยอดเงินของคุณไม่เพียงพอ กรุณาเติมเงินเพื่อทำภารกิจต่อ' });
+                return { 
+                    active, balance, showRecharge, showWithdraw, showBankPicker, 
+                    amountToPay, withdrawForm, bankColumns,
+                    formatMoney, copyText, onBankConfirm, confirmAction 
                 };
-
-                // ระบบยอดเงินเด้งเอง
-                onMounted(() => {
-                    setInterval(() => { balance.value += (Math.random() * 5); }, 10000);
-                });
-
-                return { active, balance, showRecharge, amountToPay, formatMoney, copyText, confirmRecharge, receiveJob };
             }
         });
         app.use(vant);
